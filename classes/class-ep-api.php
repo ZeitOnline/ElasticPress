@@ -81,7 +81,9 @@ class EP_API {
 
 		$index = trailingslashit( ep_get_index_name() );
 
-		$path = apply_filters( 'ep_index_post_request_path', $index . 'post/' . $post['post_id'], $post );
+		// Appending the path to add features does not make sense with TMS
+		// $path = apply_filters( 'ep_index_post_request_path', $index . 'post/' . $post['post_id'], $post );
+		$path = 'api/content/' . urlencode($post['doc_id']);
 
 		if ( function_exists( 'wp_json_encode' ) ) {
 
@@ -103,16 +105,28 @@ class EP_API {
 		$request = ep_remote_request( $path, apply_filters( 'ep_index_post_request_args', $request_args, $post ), array(), 'index_post' );
 
 		do_action( 'ep_index_post_retrieve_raw_response', $request, $post, $path );
-
-		if ( ! is_wp_error( $request ) ) {
-			$response_body = wp_remote_retrieve_body( $request );
-
-			$return = json_decode( $response_body );
-		} else {
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) >= 400 ) {
 			$return = false;
+		} else {
+			$response_body = wp_remote_retrieve_body( $request );
+			$return = true;
 		}
 
 		do_action( 'ep_after_index_post', $post, $return );
+
+		if ( $post['payload']['workflow']['published'] ) {
+			$publish_action = 'publish';
+		} else {
+			$publish_action = 'unpublish';
+		}
+		$request = ep_remote_request(
+			$path . '/' . $publish_action,
+			array('method' => 'POST', 'headers' => array('Content-Type' => ''),
+				  'timeout' => 15, 'blocking' => $blocking));
+
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) >= 400 ) {
+			$return = false;
+		}
 
 		return $return;
 	}
@@ -570,87 +584,65 @@ class EP_API {
 		$post = get_post( $post_id );
 
 		$user = get_userdata( $post->post_author );
-
 		if ( $user instanceof WP_User ) {
-			$user_data = array(
-				'raw'          => $user->user_login,
-				'login'        => $user->user_login,
-				'display_name' => $user->display_name,
-				'id'           => $user->ID,
-			);
+			$user = $user->display_name;
 		} else {
-			$user_data = array(
-				'raw'          => '',
-				'login'        => '',
-				'display_name' => '',
-				'id'           => '',
-			);
+			$user = '';
 		}
 
-		$post_date = $post->post_date;
-		$post_date_gmt = $post->post_date_gmt;
-		$post_modified = $post->post_modified;
-		$post_modified_gmt = $post->post_modified_gmt;
-		$comment_count = absint( $post->comment_count );
-		$comment_status = absint( $post->comment_status );
-		$ping_status = absint( $post->ping_status );
-		$menu_order = absint( $post->menu_order );
-
-		if ( apply_filters( 'ep_ignore_invalid_dates', true, $post_id, $post ) ) {
-			if ( ! strtotime( $post_date ) || $post_date === "0000-00-00 00:00:00" ) {
-				$post_date = null;
-			}
-
-			if ( ! strtotime( $post_date_gmt ) || $post_date_gmt === "0000-00-00 00:00:00" ) {
-				$post_date_gmt = null;
-			}
-
-			if ( ! strtotime( $post_modified ) || $post_modified === "0000-00-00 00:00:00" ) {
-				$post_modified = null;
-			}
-
-			if ( ! strtotime( $post_modified_gmt ) || $post_modified_gmt === "0000-00-00 00:00:00" ) {
-				$post_modified_gmt = null;
-			}
+		$permalink = get_permalink( $post_id );
+		$published = ($post->post_status == 'publish');
+		// Rather hacky ISO8601 formatting
+		$post_date = str_replace(' ', 'T', $post->post_date_gmt) . 'Z';
+		if ( !$post->modified_date_gmt || strpos( $post->modified_date_gmt, '0000-00-00') ) {
+			$modified_date = $post_date;
+		} else {
+			$modified_date = str_replace(' ', 'T', $post->modified_date_gmt) . 'Z';
 		}
+		$ressort = get_option('zon_ressort_main', 'blogs' );
+		$subressort = get_option('zon_ressort_sub' );
 
 		// To prevent infinite loop, we don't queue when updated_postmeta
 		remove_action( 'updated_postmeta', array( EP_Sync_Manager::factory(), 'action_queue_meta_sync' ), 10 );
 
 		$post_args = array(
-			'post_id'               => $post_id,
-			'ID'                    => $post_id,
-			'post_author'           => $user_data,
-			'post_date'             => $post_date,
-			'post_date_gmt'         => $post_date_gmt,
-			'post_title'            => $post->post_title,
-			'post_excerpt'          => $post->post_excerpt,
-			'post_content_filtered' => apply_filters( 'the_content', $post->post_content ),
-			'post_content'          => $post->post_content,
-			'post_status'           => $post->post_status,
-			'post_name'             => $post->post_name,
-			'post_modified'         => $post_modified,
-			'post_modified_gmt'     => $post_modified_gmt,
-			'post_parent'           => $post->post_parent,
-			'post_type'             => $post->post_type,
-			'post_mime_type'        => $post->post_mime_type,
-			'permalink'             => get_permalink( $post_id ),
-			'terms'                 => $this->prepare_terms( $post ),
-			'meta'                  => $this->prepare_meta_types( $this->prepare_meta( $post ) ), // post_meta removed in 2.4
-			'date_terms'            => $this->prepare_date_terms( $post_date ),
-			'comment_count'         => $comment_count,
-			'comment_status'        => $comment_status,
-			'ping_status'           => $ping_status,
-			'menu_order'            => $menu_order,
-			'guid'                  => $post->guid,
+			'doc_id' => $permalink,
+			'doc_type' => 'blogpost',
+			'url' => $permalink,
+			'title' => $post->post_title,
+			'teaser' => $post->post_excerpt || $post->post_title,
+			'body' => '<body>' . $post->post_content . '</body>',
+			'author' => $user,
+			'date' => $post_date,
+
+			'payload' => array(
+				'body' => array(
+					'title' => $post->post_title,
+					'subtitle' => $post->post_excerpt,
+					'url' => $permalink, // ILink
+				),
+				'teaser' => array(
+					'title' => $post->post_title,
+					'text' => $post->post_excerpt,
+				),
+				'document' => array(
+					'ressort' => $ressort,
+					'date_first_released' => $post_date,
+					'last-semantic-change' => $modified_date,
+					'serie' => get_bloginfo( 'name' ),
+				),
+				'workflow' => array(
+					'product-id' => 'ZBL' . get_current_blog_id(),
+					'published' => $published,
+					'date_last_published' => $post_date,
+					'date_last_published_semantic' => $post_date,
+				),
+			),
 		);
-
-		/**
-		 * This filter is named poorly but has to stay to keep backwards compat
-		 */
-		$post_args = apply_filters( 'ep_post_sync_args', $post_args, $post_id );
-
-		$post_args = apply_filters( 'ep_post_sync_args_post_prepare_meta', $post_args, $post_id );
+		// don't index empty fields
+		if ( $subressort ) {
+			$post_args['payload']['document']['sub_ressort'] = $subressort;
+		}
 
 		// Turn back on updated_postmeta hook
 		add_action( 'updated_postmeta', array( EP_Sync_Manager::factory(), 'action_queue_meta_sync' ), 10, 4 );
