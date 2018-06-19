@@ -54,13 +54,13 @@ require_once( 'classes/class-ep-features.php' );
 require_once( 'classes/class-ep-dashboard.php' );
 
 // Include core features
-require_once( 'features/search/search.php' );
-require_once( 'features/related-posts/related-posts.php' );
-require_once( 'features/protected-content/protected-content.php' );
-require_once( 'features/woocommerce/woocommerce.php' );
-require_once( 'features/documents/documents.php' );
-require_once( 'features/autosuggest/autosuggest.php' );
-require_once( 'features/facets/facets.php' );
+// require_once( 'features/search/search.php' );
+// require_once( 'features/related-posts/related-posts.php' );
+// require_once( 'features/protected-content/protected-content.php' );
+// require_once( 'features/woocommerce/woocommerce.php' );
+// require_once( 'features/documents/documents.php' );
+// require_once( 'features/autosuggest/autosuggest.php' );
+// require_once( 'features/facets/facets.php' );
 
 /**
  * WP CLI Commands
