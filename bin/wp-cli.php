@@ -591,6 +591,9 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 
 		} else { // Post wasn't killed so process it.
 
+			$this->posts[] = $post_args;
+
+			/*
 			// put the post into the queue
 			$this->posts[ $post_id ][] = '{ "index": { "_id": "' . absint( $post_id ) . '" } }';
 
@@ -603,6 +606,7 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 				$this->posts[ $post_id ][] = addcslashes( json_encode( $post_args ), "\n" );
 
 			}
+			*/
 
 			// augment the counter
 			++ $post_count;
@@ -652,6 +656,7 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 			WP_CLI::error( 'There are no posts to index.' );
 		}
 
+		/*
 		$flatten = array();
 
 		foreach ( $this->posts as $post ) {
@@ -666,12 +671,19 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			WP_CLI::log( 'Request string length: ' . size_format( mb_strlen( $body, '8bit' ), 2 ) );
 		}
+		*/
 
 		// decode the response
-		$response = ep_bulk_index_posts( $body );
+		foreach ( $this->posts as $post ) {
+			$response = ep_index_post( $post );
+			if ( ! $response ) {
+				$this->failed_posts[] = $post['doc_id'];
+			}
+		}
 
 		$this->reset_transient();
 
+		/*
 		do_action( 'ep_cli_post_bulk_index', $this->posts );
 
 		if ( is_wp_error( $response ) ) {
@@ -702,6 +714,7 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 			// there were no errors, all the posts were added
 			$attempts = 0;
 		}
+		*/
 	}
 
 	/**
@@ -736,13 +749,14 @@ class ElasticPress_CLI_Command extends WP_CLI_Command {
 
 			foreach ( $this->failed_posts as $failed ) {
 				$failed_post = get_post( $failed );
-				if ( $failed_post ) {
-					$error_text .= "- {$failed}: " . $failed_post->post_title . "\r\n";
+				// if ( $failed_post ) {
+					$error_text .= "- {$failed}: \r\n"; // . $failed_post->post_title . "\r\n";
 
+					/*
 					if ( ! empty( $this->failed_posts_message[ $failed ] ) ) {
 						$error_text .= $this->format_bulk_error_message( $this->failed_posts_message[ $failed ] ) . PHP_EOL;
-					}
-				}
+					}*/
+				// }
 			}
 
 			WP_CLI::log( $error_text );

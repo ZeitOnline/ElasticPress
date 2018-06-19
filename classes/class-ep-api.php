@@ -1991,6 +1991,8 @@ class EP_API {
 	 * @return array|object|WP_Error
 	 */
 	public function bulk_index_posts( $body ) {
+		return new WP_Error('TMS does not support bulk indexing');
+
 		// create the url with index name and type so that we don't have to repeat it over and over in the request (thereby reducing the request size)
 		$path = apply_filters( 'ep_bulk_index_post_request_path', trailingslashit( ep_get_index_name() ) . 'post/_bulk', $body );
 

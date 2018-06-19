@@ -568,6 +568,8 @@ class EP_Dashboard {
 
 					} else { // Post wasn't killed so process it.
 
+						$queued_posts[] = $post_args;
+						/*
 						$queued_posts[ get_the_ID() ][] = '{ "index": { "_id": "' . absint( get_the_ID() ) . '" } }';
 
 						if ( function_exists( 'wp_json_encode' ) ) {
@@ -575,10 +577,12 @@ class EP_Dashboard {
 						} else {
 							$queued_posts[ get_the_ID() ][] = addcslashes( json_encode( $post_args ), "\n" );
 						}
+						*/
 					}
 				}
 
 				if ( ! empty( $queued_posts ) ) {
+					/*
 					$flatten = array();
 
 					foreach ( $queued_posts as $post ) {
@@ -589,11 +593,16 @@ class EP_Dashboard {
 					// make sure to add a new line at the end or the request will fail
 					$body = rtrim( implode( "\n", $flatten ) ) . "\n";
 
-					$return = ep_bulk_index_posts( $body );
+					$return = ep_bulk_index_posts( $queued_posts );
 					if( is_wp_error( $return ) ){
 						header("HTTP/1.1 500 Internal Server Error");
 						wp_send_json_error(  );
 						exit;
+					}
+					*/
+
+					foreach ( $queued_posts as $post ) {
+						$response = ep_index_post( $post );
 					}
 				}
 
