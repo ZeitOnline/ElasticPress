@@ -2212,7 +2212,9 @@ class EP_API {
 		);
 
 		//Add the API Header
-		$args['headers'] = $this->format_request_headers();
+		if ( empty( $args['headers'] ) ) {
+			$args['headers'] = $this->format_request_headers();
+		}
 
 		$request = false;
 		$failures = 0;
