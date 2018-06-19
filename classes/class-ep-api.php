@@ -135,6 +135,7 @@ class EP_API {
 	 * @return bool
 	 */
 	public function refresh_index() {
+		return true; // DISABLED, makes no sense with TMS
 
 		$request_args = array( 'method' => 'POST' );
 
@@ -427,6 +428,7 @@ class EP_API {
 	 * @return bool|array
 	 */
 	public function delete_network_alias() {
+		return true; // DISABLED, makes no sense with TMS
 
 		$path = '*/_alias/' . ep_get_network_alias();
 
@@ -451,6 +453,7 @@ class EP_API {
 	 * @return array|bool
 	 */
 	public function create_network_alias( $indexes ) {
+		return true; // DISABLED, makes no sense with TMS
 
 		$path = '_aliases';
 
@@ -493,6 +496,7 @@ class EP_API {
 	 * @return array|bool|mixed
 	 */
 	public function put_mapping() {
+		return true; // DISABLED, makes no sense with TMS
 		$es_version = $this->get_elasticsearch_version();
 
 		if ( empty( $es_version ) ) {
@@ -944,7 +948,7 @@ class EP_API {
 	 * @return array|bool
 	 */
 	public function delete_index( $index_name = null ) {
-
+		return true; // DISABLED, makes no sense with TMS
 		$index = ( null === $index_name ) ? ep_get_index_name() : sanitize_text_field( $index_name );
 
 		$request_args = array( 'method' => 'DELETE', 'timeout' => 30, );
@@ -970,6 +974,7 @@ class EP_API {
 	 * @return bool
 	 */
 	public function index_exists( $index_name = null ) {
+		return true; // DISABLED, makes no sense with TMS
 
 		$index = ( null === $index_name ) ? ep_get_index_name() : sanitize_text_field( $index_name );
 
