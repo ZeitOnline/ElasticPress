@@ -2311,6 +2311,11 @@ class EP_API {
 	 */
 	public function get_elasticsearch_info( $force = false ) {
 
+		return array(
+			'plugins' => [],
+			'version' => '2.4.6', // ES version the TMS is backed by
+		);
+
 		if ( $force || null === $this->elasticsearch_version || null === $this->elasticsearch_plugins ) {
 
 			// Get ES info from cache if available. If we are forcing, then skip cache check
