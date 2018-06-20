@@ -40,6 +40,13 @@ Please refer to [Github](https://github.com/10up/ElasticPress) for detailed usag
 
 == Changelog ==
 
+= 99.TMS.1_2.5.2 =
+
+ZON modifications to use TMS instead of ES for indexing
+
+(Have to use a fake high version to prevent the update checker from wanting
+to update to the upstream version)
+
 = 2.5.2 (Requires re-index) =
 
 This is a small bug fix release.
