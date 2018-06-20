@@ -348,26 +348,14 @@ class EP_API {
 	 * @return bool
 	 */
 	public function delete_post( $post_id, $blocking = true  ) {
-
-		$index = trailingslashit( ep_get_index_name() );
-
-		$path = $index . 'post/' . $post_id;
-
+		$path = 'api/content/' . urlencode(get_permalink( $post_id ));
 		$request_args = array( 'method' => 'DELETE', 'timeout' => 15, 'blocking' => $blocking );
-
 		$request = ep_remote_request( $path, apply_filters( 'ep_delete_post_request_args', $request_args, $post_id ), array(), 'delete_post' );
 
-		if ( ! is_wp_error( $request ) ) {
-			$response_body = wp_remote_retrieve_body( $request );
-
-			$response = json_decode( $response_body, true );
-
-			if ( ! empty( $response['found'] ) ) {
-				return true;
-			}
+		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) >= 400 ) {
+			return false;
 		}
-
-		return false;
+		return true;
 	}
 
 	/**
