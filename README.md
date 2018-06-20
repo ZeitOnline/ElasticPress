@@ -3,6 +3,25 @@ ElasticPress [![Build Status](https://travis-ci.org/10up/ElasticPress.svg?branch
 
 A fast and flexible search and query engine for WordPress.
 
+
+# ZEIT ONLINE / TMS Branch
+
+This is a fork. :) We've tweaked the plugin to index into
+[Retresco](https://www.retresco.de/) Topic Management System (TMS) instead of
+directly into Elasticsearch. (Searching from WP does not work at all.)
+
+Our development happens on the `tms` branch,
+and we use the `staging` and `production` branches for deployment.
+We continue the upstream changelog that's contained in `readme.txt`.
+
+(Install the plugin from the git repository using the github-updater plugin.)
+
+To configure, set the TMS base URL as the "elasticsearch server", e.g.
+`http://tms-frontend.zeit.de`
+
+
+## ElasticPress
+
 **Please note:** master is the stable branch
 
 **Upgrade Notice:** Versions 1.6.1, 1.6.2, 1.7, 1.8, 2.1, 2.1.2, 2.2 require re-syncing.
